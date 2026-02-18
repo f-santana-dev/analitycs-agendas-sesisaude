@@ -1,0 +1,133 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  background-color: #0e1117;
+  color: #fafafa;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  scrollbar-color: #2d303e #11141d;
+}
+
+/* Dark scrollbar for any visible native scrollbar */
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: #11141d;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: #2d303e;
+  border-radius: 999px;
+}
+
+/* Hide scrollbar but keep scroll behavior */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Glass scrollbar for filter lists */
+.glass-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(220, 228, 255, 0.28) rgba(255, 255, 255, 0.04);
+}
+
+.glass-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.glass-scrollbar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 999px;
+}
+
+.glass-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(240, 246, 255, 0.32), rgba(200, 214, 255, 0.2));
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(245, 249, 255, 0.42), rgba(210, 222, 255, 0.28));
+}
+
+/* Force dark select dropdowns to match theme */
+.select-dark {
+  color-scheme: dark;
+}
+
+.select-dark option,
+.select-dark optgroup {
+  background-color: #11141d;
+  color: #ffffff;
+}
+
+/* Compact KPI tooltip */
+.tooltip {
+  position: relative;
+}
+
+.tooltip::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  margin-top: 6px;
+  transform: translate(-50%, -4px);
+  background: #11141d;
+  border: 1px solid #2d303e;
+  color: #7CFFB2;
+  font-size: 10px;
+  line-height: 1.2;
+  padding: 6px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 120ms ease, transform 120ms ease;
+  pointer-events: none;
+  z-index: 50;
+}
+
+.tooltip:hover::after {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+/* Tooltip opening to the right (for left-side icons) */
+.tooltip-right::after {
+  left: 0;
+  transform: translate(0, -4px);
+}
+
+.tooltip-right:hover::after {
+  transform: translate(0, 0);
+}
+
+/* Subtle entry animation */
+@keyframes fadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-slide {
+  animation: fadeSlideUp 420ms ease-out;
+}
