@@ -66,6 +66,11 @@ interface Filters {
   professionals: string[];
 }
 
+interface DashboardMeta {
+  updated_at?: string;
+  data_max_date?: string | null;
+}
+
 function MiniKPI({ label, value, tooltip, tone }: { label: string; value: string; tooltip?: string; tone?: 'danger' | 'default' }) {
   const valueClass = tone === 'danger' ? 'text-rose-400' : 'text-white';
   const borderClass = tone === 'danger' ? 'border-rose-500/40' : 'border-border';
@@ -136,6 +141,8 @@ function App() {
   const [bloqueiosGlobalModalOpen, setBloqueiosGlobalModalOpen] = useState(false);
   const [bloqueiosGlobalBusca, setBloqueiosGlobalBusca] = useState('');
   const [bloqueiosGlobalSort, setBloqueiosGlobalSort] = useState<'qtd' | 'data'>('qtd');
+  const [lastUpdatedAtLabel, setLastUpdatedAtLabel] = useState('21/02/2026 00:00');
+  const [dataUntilLabel, setDataUntilLabel] = useState('21/02/2026');
   const fetchSeqRef = useRef(0);
 
   const formatNumber = (val: number | undefined | null) =>
@@ -147,6 +154,22 @@ function App() {
     const [y, m, d] = dateKey.split('-');
     if (!y || !m || !d) return dateKey;
     return `${d}/${m}/${y}`;
+  };
+  const formatDateTimeFromIso = (isoText: string) => {
+    const parsed = new Date(isoText);
+    if (Number.isNaN(parsed.getTime())) return isoText;
+    return parsed.toLocaleString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+  const formatSqlDateText = (sqlDateText: string) => {
+    const match = String(sqlDateText).match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (!match) return String(sqlDateText);
+    return `${match[3]}/${match[2]}/${match[1]}`;
   };
   const getWeekStage = (index: number, total: number): 'past' | 'current' | 'future' => {
     const currentIndex = Math.floor(total / 2);
@@ -460,6 +483,26 @@ function App() {
       setter([...current, value]);
     }
   };
+
+  useEffect(() => {
+    const loadMeta = async () => {
+      try {
+        const res = await fetch(`/dados_agendas.meta.json?v=${Date.now()}`, { cache: 'no-store' });
+        if (!res.ok) return;
+        const meta = (await res.json()) as DashboardMeta;
+        if (meta.updated_at) {
+          setLastUpdatedAtLabel(formatDateTimeFromIso(meta.updated_at));
+        }
+        if (meta.data_max_date) {
+          setDataUntilLabel(formatSqlDateText(meta.data_max_date));
+        }
+      } catch (error) {
+        console.error('Erro ao carregar metadata de atualizacao', error);
+      }
+    };
+
+    void loadMeta();
+  }, []);
 
   useEffect(() => {
     const loadInitialData = async () => {
@@ -867,6 +910,15 @@ function App() {
           GROUP BY week_start
         `);
         const weeklyMap = new Map<string, any>();
+        const maxDataRes = await conn.query(`
+          SELECT MAX(CAST(DataQuadro AS DATE)) as max_date
+          FROM agendas
+          WHERE DataQuadro IS NOT NULL
+        `);
+        const maxDataKey = normalizeSqlDate(maxDataRes.toArray()[0]?.max_date);
+        if (maxDataKey) {
+          setDataUntilLabel(formatDateFromSqlKey(maxDataKey));
+        }
         weekStarts.forEach((ws) => {
           weeklyMap.set(fmtSql(ws), {
             weekStart: ws,
@@ -1140,7 +1192,8 @@ function App() {
             </div>
           </div>
           <div className="text-right">
-            <div className="text-secondary text-[10px]">Dados atualizados em: {new Date().toLocaleDateString()}</div>
+            <div className="text-secondary text-[10px]">Atualizado em: {lastUpdatedAtLabel}</div>
+            <div className="text-secondary text-[10px]">Dados ate: {dataUntilLabel}</div>
             <div className="flex items-center justify-end gap-2 mt-1">
               <button onClick={() => { void exportAll(); }} className="inline-flex items-center gap-1 text-[10px] px-2 py-1 rounded-full border border-border bg-card text-secondary hover:text-white hover:border-primary transition-colors">
                 <Download className="w-3 h-3" />

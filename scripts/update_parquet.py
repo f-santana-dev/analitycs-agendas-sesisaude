@@ -1,6 +1,8 @@
 import argparse
+import json
 import re
 import shutil
+from datetime import datetime
 from pathlib import Path
 
 import pandas as pd
@@ -54,6 +56,15 @@ def dataframe_from_sql(conn: pyodbc.Connection, sql_text: str) -> pd.DataFrame:
     columns = [col[0] for col in cur.description]
     rows = cur.fetchall()
     return pd.DataFrame.from_records(rows, columns=columns)
+
+
+def extract_data_max_date(df: pd.DataFrame) -> str | None:
+    if "DataQuadro" not in df.columns or df.empty:
+        return None
+    parsed = pd.to_datetime(df["DataQuadro"], errors="coerce")
+    if parsed.isna().all():
+        return None
+    return parsed.max().date().isoformat()
 
 
 def main() -> int:
@@ -152,7 +163,22 @@ def main() -> int:
     public_dir.mkdir(parents=True, exist_ok=True)
     dest = public_dir / parquet_path.name
     shutil.copy2(parquet_path, dest)
+
+    metadata = {
+        "updated_at": datetime.now().astimezone().isoformat(timespec="seconds"),
+        "rows": int(len(df)),
+        "data_max_date": extract_data_max_date(df),
+        "parquet_file": parquet_path.name,
+    }
+    meta_name = f"{parquet_path.stem}.meta.json"
+    meta_path = public_dir / meta_name
+    meta_path.write_text(
+        json.dumps(metadata, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+
     print(f"Copiado para: {dest}")
+    print(f"Metadata salvo em: {meta_path}")
     print(f"Total de linhas: {len(df)}")
 
     return 0
