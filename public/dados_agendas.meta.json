@@ -1,6 +1,6 @@
 {
-  "updated_at": "2026-02-21T15:55:33-04:00",
-  "rows": 25872,
-  "data_max_date": "2023-11-30",
+  "updated_at": "2026-02-24T14:15:56-04:00",
+  "rows": 18730,
+  "data_max_date": "2026-03-14",
   "parquet_file": "dados_agendas.parquet"
 }
